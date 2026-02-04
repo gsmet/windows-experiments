@@ -7,6 +7,16 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      quarkus_fork:
+        description: 'Quarkus fork repository (e.g., quarkusio/quarkus or username/quarkus)'
+        required: true
+        default: 'quarkusio/quarkus'
+      quarkus_branch:
+        description: 'Quarkus branch to build'
+        required: true
+        default: 'main'
 
 jobs:
   build:
@@ -25,10 +35,33 @@ jobs:
           distribution: temurin
           cache: maven
 
+      - name: Checkout Quarkus
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          cd ..
+          git clone https://github.com/${{ github.event.inputs.quarkus_fork }}.git quarkus
+          cd quarkus
+          git checkout ${{ github.event.inputs.quarkus_branch }}
+
+      - name: Build Quarkus
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          cd ../quarkus
+          ./mvnw clean install -DskipTests -DskipITs -Dno-format -Dno-test-modules -Dquickly
+
+      - name: Update pom.xml for custom Quarkus
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          sed -i 's/<quarkus.platform.group-id>io.quarkus.platform<\/quarkus.platform.group-id>/<quarkus.platform.group-id>io.quarkus<\/quarkus.platform.group-id>/' pom.xml
+          sed -i 's/<quarkus.platform.version>.*<\/quarkus.platform.version>/<quarkus.platform.version>999-SNAPSHOT<\/quarkus.platform.version>/' pom.xml
+
       - name: Build (Linux)
         if: runner.os != 'Windows'
         run: ./mvnw verify -B
-        
+
       - name: Build (Windows)
         if: runner.os == 'Windows'
-        run: .\mvnw.cmd verify -B   
+        run: .\mvnw.cmd verify -B
