@@ -24,6 +24,12 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
 
     steps:
+      - name: Checkout Quarkus
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.quarkus_fork || 'quarkusio/quarkus' }}
+          ref: ${{ github.event.inputs.quarkus_branch || 'main' }}
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -31,19 +37,9 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Checkout Quarkus
-        shell: bash
-        run: |
-          git config --global core.longpaths true
-          git config --global core.autocrlf false
-          git clone https://github.com/${{ github.event.inputs.quarkus_fork }}.git quarkus
-          cd quarkus
-          git checkout ${{ github.event.inputs.quarkus_branch }}
-
       - name: Build Quarkus
         shell: bash
         run: |
-          cd quarkus
           ./mvnw clean install -DskipTests -DskipITs -Dno-format -Dno-test-modules -Dquickly -T2
 
       - name: Upload Quarkus Maven Repository
@@ -56,8 +52,8 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     needs: build-quarkus
-    if: always()
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
 
