@@ -40,7 +40,7 @@ jobs:
       - name: Build Quarkus
         shell: bash
         run: |
-          ./mvnw clean install -DskipTests -DskipITs -Dno-format -Dno-test-modules -Dquickly -T2
+          ./mvnw clean install -DskipTests -DskipITs -Dno-format -Dno-test-modules -Dquickly -T2 -Prelocations
 
       - name: Upload Quarkus Maven Repository
         uses: actions/upload-artifact@v4
