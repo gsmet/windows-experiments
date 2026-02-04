@@ -40,6 +40,8 @@ jobs:
         shell: bash
         run: |
           cd ..
+          git config --global core.longpaths true
+          git config --global core.autocrlf false
           git clone https://github.com/${{ github.event.inputs.quarkus_fork }}.git quarkus
           cd quarkus
           git checkout ${{ github.event.inputs.quarkus_branch }}
